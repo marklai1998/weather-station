@@ -1,7 +1,5 @@
 # Weather Station
 
-![how it looks](/docs/cover.png)
-
 Code for my personal weather station coded in Python
 
 ## Hardware
@@ -12,3 +10,13 @@ Code for my personal weather station coded in Python
 ## API
 
 - [Open weather Map One Call API 3.0](https://openweathermap.org/api/one-call-3)
+
+## UI
+
+### Normal
+
+![Main UI](/docs/cover.png)
+
+### When there is a rain/snow soon
+
+![Rain](/docs/rain.jpeg)
