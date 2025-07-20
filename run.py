@@ -62,6 +62,19 @@ apiKey = os.environ['API_KEY']
 data = None
 
 
+def smartRound(value):
+    if abs(value) >= 1:
+        return round(value)
+    else:
+        # Convert to string to find the first non-zero digit
+        str_val = f"{value:.16f}"  # use enough precision to catch small values
+        decimal_part = str_val.split('.')[1]
+        for i, ch in enumerate(decimal_part):
+            if ch != '0':
+                return round(value, i + 1)
+        return 0.0  # fallback in case all are zeros
+
+
 def text(d, cord, st, **args):
     d.text(cord, st, **args)
     return d.textbbox(cord, st, **args)
@@ -154,14 +167,14 @@ class CurrentTempWidget:
         current = data.get('current')
         today = data.get('daily')[0]
 
-        text(draw, (20, 64), f"{round(current.get('temp') or 0)}°", font=font64, anchor='ls')
+        text(draw, (20, 64), f"{smartRound(current.get('temp') or 0)}°", font=font64, anchor='ls')
         text(draw, (137, 44), f"Feels like", font=font12, anchor='ls')
-        text(draw, (137, 64), f"{round(current.get('feels_like') or 0)}°", font=font20, anchor='ls')
+        text(draw, (137, 64), f"{smartRound(current.get('feels_like') or 0)}°", font=font20, anchor='ls')
 
         draw.bitmap((20, 72), upImg)
-        text(draw, (38, 88), f"{round(today.get('temp').get('max'))}°", font=font20, anchor='ls')
+        text(draw, (38, 88), f"{smartRound(today.get('temp').get('max'))}°", font=font20, anchor='ls')
         draw.bitmap((80, 72), downImg)
-        text(draw, (98, 88), f"{round(today.get('temp').get('min'))}°", font=font20, anchor='ls')
+        text(draw, (98, 88), f"{smartRound(today.get('temp').get('min'))}°", font=font20, anchor='ls')
 
         return image
 
@@ -176,19 +189,25 @@ class StatsWidget:
         current = data.get('current')
 
         draw.bitmap((40, 24), windImg)
-        wind = text(draw, (72, 48), f"{round(current.get('wind_speed') or 0)}", font=font24, anchor='ls')
+        wind = text(draw, (72, 48), f"{smartRound(current.get('wind_speed') or 0)}", font=font24, anchor='ls')
         text(draw, (wind[2] + 1, wind[3]), "mph", font=font12, anchor='ls')
 
         draw.bitmap((40, 56), humidityImg)
-        humidity = text(draw, (72, 80), f"{round(current.get('humidity') or 0)}", font=font24, anchor='ls')
+        humidity = text(draw, (72, 80), f"{smartRound(current.get('humidity') or 0)}", font=font24, anchor='ls')
         text(draw, (humidity[2] + 1, humidity[3]), "%", font=font12, anchor='ls')
 
         draw.bitmap((40, 88), rainLevelImg)
-        rain = text(draw, (72, 112), f"{round(current.get('rain') or 0)}", font=font24, anchor='ls')
+        rainValue = current.get('rain')
+        rain = text(draw, (72, 112), f"{smartRound(rainValue.get('1h') or 0) if rainValue is not None else 0}",
+                    font=font24,
+                    anchor='ls')
         text(draw, (rain[2] + 1, rain[3]), "mm", font=font12, anchor='ls')
 
         draw.bitmap((40, 120), snowLevelImg)
-        snow = text(draw, (72, 144), f"{round(current.get('snow') or 0)}", font=font24, anchor='ls')
+        snowValue = current.get('snow')
+        snow = text(draw, (72, 144), f"{smartRound(snowValue.get('1h') or 0) if snowValue is not None else 0}",
+                    font=font24,
+                    anchor='ls')
         text(draw, (snow[2] + 1, snow[3]), "mm", font=font12, anchor='ls')
 
         return image
@@ -215,10 +234,10 @@ class DayEstWidget:
 
         text(draw, (80 / 2, 28), datetime.fromtimestamp(data.get('dt')).strftime('%I%p').upper(), font=font20,
              anchor='ms', align='center')
-        text(draw, (80 / 2, 104), f"{round(data.get('temp'))}°", font=font32, anchor='ms', align='center')
+        text(draw, (80 / 2, 104), f"{smartRound(data.get('temp'))}°", font=font32, anchor='ms', align='center')
 
         if data.get('pop') > 0:
-            rainRop = text(draw, (80 / 2 + 12, 124), f"{round(data.get('pop') * 100)}%", font=font20, anchor='ms',
+            rainRop = text(draw, (80 / 2 + 12, 124), f"{smartRound(data.get('pop') * 100)}%", font=font20, anchor='ms',
                            align='center')
             draw.bitmap((rainRop[0] - 24, rainRop[1] - 2), rainLevelImg.resize((24, 24)))
 
@@ -257,17 +276,17 @@ class WeekEstWidget:
             logging.info(e)
             draw.rectangle((72, 4, 72 + 40, 4 + 40))
 
-        text(draw, (120, 48 / 2), f"{round(data.get('temp').get('day') or 0)}°", font=font32, anchor='lm',
+        text(draw, (120, 48 / 2), f"{smartRound(data.get('temp').get('day') or 0)}°", font=font32, anchor='lm',
              align='center')
 
         draw.bitmap((184, 12), upImg.resize((24, 24)))
-        text(draw, (208, 32), f"{round(data.get('temp').get('max') or 0)}°", font=font20, anchor='ls')
+        text(draw, (208, 32), f"{smartRound(data.get('temp').get('max') or 0)}°", font=font20, anchor='ls')
         draw.bitmap((248, 12), downImg.resize((24, 24)))
-        text(draw, (272, 32), f"{round(data.get('temp').get('min') or 0)}°", font=font20, anchor='ls')
+        text(draw, (272, 32), f"{smartRound(data.get('temp').get('min') or 0)}°", font=font20, anchor='ls')
 
         if data.get('pop') > 0:
             draw.bitmap((312, 12), rainLevelImg.resize((24, 24)))
-            text(draw, (336, 32), f"{round(data.get('pop') * 100)}%", font=font20, anchor='ls')
+            text(draw, (336, 32), f"{smartRound(data.get('pop') * 100)}%", font=font20, anchor='ls')
 
         return image
 
@@ -304,27 +323,30 @@ class PrecipitationWidget:
 
         maxIndex, value = max(enumerate(map(lambda x: x.get('precipitation') or 0, items)), key=operator.itemgetter(1))
 
-        isStopped = lambda x: x.get('precipitation') or 0 == 0
+        isStopped = lambda x: (x.get('precipitation') or 0) == 0
         stopItem = next((x for x in items if isStopped(x)), None)
 
-        isStarted = lambda x: x.get('precipitation') or 0 > 0
+        isStarted = lambda x: (x.get('precipitation') or 0) > 0
         startItem = next((x for x in items if isStarted(x)), None)
 
-        if items[0].get('precipitation') or 0 > 0:
-            mins = round((stopItem.get('dt') - now) / 60)
+        if ((items[0].get('precipitation') or 0) > 0) and stopItem is not None:
+            mins = smartRound((stopItem.get('dt') - now) / 60)
 
             text(draw, (16, 8), f"Rain stopping in {max(0, mins)}min", font=font20, anchor='lt', align='center')
-        else:
-            mins = round((startItem.get('dt') - now) / 60)
+        elif ((items[0].get('precipitation') or 0) == 0) and startItem is not None:
+            mins = smartRound((startItem.get('dt') - now) / 60)
 
             text(draw, (16, 8), f"Rain starting in {max(0, mins)}min", font=font20, anchor='lt', align='center')
+        else:
+            text(draw, (16, 8), f"Raining", font=font20, anchor='lt', align='center')
 
         for idx, minute in enumerate(items):
             left = 30 + (idx * 9)
             image.paste(self.getItem(minute), (left, 40))
 
             if idx == maxIndex:
-                text(draw, (left + 4, 38), f"{round(minute.get('precipitation') or 0)}mm", font=font12, anchor='ms',
+                text(draw, (left + 4, 38), f"{smartRound(minute.get('precipitation') or 0)}mm", font=font12,
+                     anchor='ms',
                      align='center')
                 draw.line([(left + 4, 40), (left + 4, 122)], fill=0, width=1)
 
@@ -346,13 +368,16 @@ precipitationWidget = PrecipitationWidget()
 
 def render():
     global shuttingDown
+    prevHasPrecipitation = None
+    lastFullRefresh = 0  # epoch of last full refresh
+
     while not shuttingDown:
         if not data: continue
         image, draw = getCanvas((epd.width, epd.height))
 
         now = time.time()
         precipitationItems = [x for x in (data.get('minutely') or []) if (x.get('dt') or 0) >= now]
-        precipitation = any(item.get('precipitation') or 0 > 0 for item in precipitationItems)
+        hasPrecipitation = any(item.get('precipitation') or 0 > 0 for item in precipitationItems)
 
         image.paste(clockWidget.getWidget(data), (0, 0))
         image.paste(currentWeatherWidget.getWidget(data), (0, 56))
@@ -360,7 +385,7 @@ def render():
         image.paste(statsWidget.getWidget(data), (0, 312))
         image.paste(dayEstWidget.getWidget(data), (200, 0))
 
-        if precipitation:
+        if hasPrecipitation:
             image.paste(precipitationWidget.getWidget(data), (200, 136))
             image.paste(weekEstWidget.getWidget(data), (200, 288))
             draw.line([(216, 288), (784, 288)], fill=0, width=1)
@@ -373,10 +398,23 @@ def render():
         draw.line([(200, 0), (200, 480)], fill=0, width=3)
         draw.line([(216, 136), (784, 136)], fill=0, width=1)
 
+        needFullRefresh = False
+        if prevHasPrecipitation != hasPrecipitation:
+            needFullRefresh = True
+        elif (now - lastFullRefresh) >= 3600:
+            needFullRefresh = True
+
         try:
+            if needFullRefresh:
+                epd.init()
+                epd.Clear()
+                epd.init_part()
+                lastFullRefresh = now
             epd.display_Partial(epd.getbuffer(image), 0, 0, epd.width, epd.height)
         except IOError as e:
             logging.info(e)
+
+        prevHasPrecipitation = hasPrecipitation
 
 
 def openWeather():
@@ -386,11 +424,8 @@ def openWeather():
             querystring = {"lat": "43.829010", "lon": "-79.296370", "appid": apiKey,
                            "units": "metric"}
 
-            payload = ""
-            headers = {"User-Agent": "insomnia/10.0.0"}
-
-            response = requests.request("GET", "https://api.openweathermap.org/data/3.0/onecall", data=payload,
-                                        headers=headers, params=querystring)
+            response = requests.request("GET", "https://api.openweathermap.org/data/3.0/onecall",
+                                        params=querystring)
 
             data = response.json()
             time.sleep(5 * 60)
